@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import tailwindcss from '@tailwindcss/vite' // ✨ THÊM DÒNG NÀY
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
+    tailwindcss(), // ✨ THÊM DÒNG NÀY VÀO TRONG MẢNG PLUGINS
   ],
+  base: '/thi-t-m-i-sinh-nh-t/',
 })
