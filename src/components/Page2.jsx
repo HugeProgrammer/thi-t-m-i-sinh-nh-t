@@ -39,7 +39,7 @@ export default function Page2({ onNext }) {
             <div className="bg-white/60 border border-amber-200/50 rounded-2xl p-3 md:p-4 shadow-md bg-amber-50/40 animate-float flex flex-col items-center">
               <span className="inline-block text-xl mb-1">⏰</span>
               <span className="block text-amber-700 tracking-widest text-[10px] md:text-[11px] uppercase font-bold mb-1">Thời gian</span>
-              <span className="text-slate-900 font-bold text-sm md:text-base">Ngày 13/06 19:00 • Thứ Bảy</span>
+              <span className="text-slate-900 font-bold text-sm md:text-base">Ngày 6/06 19:00 • Thứ Bảy</span>
             </div>
             
             <div className="bg-white/60 border border-amber-200/50 rounded-2xl p-3 md:p-4 shadow-md bg-sky-50/40 animate-float-delayed flex flex-col items-center">

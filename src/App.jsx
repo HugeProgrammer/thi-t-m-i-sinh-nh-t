@@ -3,6 +3,7 @@ import Page1 from './components/Page1';
 import MemoryPage from './components/MemoryPage';
 import Page2 from './components/Page2';
 import Page3 from './components/Page3';
+import Chatbot from './components/Chatbot';
 
 export default function App() {
   const [noCount, setNoCount] = useState(0);
@@ -165,7 +166,8 @@ export default function App() {
         noCount={noCount} 
         setNoCount={setNoCount} 
       />
-
+{/* ✨ CHATBOT ĐƯỢC CHÈN VÀO ĐÂY */}
+      <Chatbot />
     </div>
   );
 }
