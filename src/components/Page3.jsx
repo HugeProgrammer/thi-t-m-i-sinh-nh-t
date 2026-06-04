@@ -1,9 +1,8 @@
 import { useState } from 'react';
+import confetti from 'canvas-confetti'; // ✨ Import thư viện pháo hoa
 
-export default function Page3({ playMusic, sendNotification }) {
+export default function Page3({ playMusic, sendNotification, noCount, setNoCount }) {
   const [showModal, setShowModal] = useState(false);
-  const [fallingElements, setFallingElements] = useState([]);
-  const [noCount, setNoCount] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
 
   const rsvpPhrases = [
@@ -32,19 +31,45 @@ export default function Page3({ playMusic, sendNotification }) {
     setTimeout(() => setIsShaking(false), 400);
   };
 
+  // ✨ HÀM BẮN PHÁO HOA LIÊN TỤC TRONG 3 GIÂY
+  const fireFireworks = () => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      // Bắn từ bên trái
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.8 },
+        colors: ['#ff007f', '#ffb6c1', '#ffd700'] // Hồng đậm, hồng nhạt, vàng gold
+      });
+      // Bắn từ bên phải
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.8 },
+        colors: ['#ff007f', '#ffb6c1', '#ffd700']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+  };
+
   const handleYesClick = () => {
-    const items = ['✨', '🦋', '💙', '🌸', '💖', '👑', '🎈', '🎉', '🎁'];
-    const newElements = Array.from({ length: 180 }).map((_, i) => ({ 
-      id: i,
-      char: items[Math.floor(Math.random() * items.length)],
-      left: Math.random() * 100,
-      delay: Math.random() * 1.2,
-      size: Math.random() * 32 + 15,
-    }));
-    setFallingElements(newElements);
+    // Kích hoạt pháo hoa
+    fireFireworks();
+    
+    // Hiện Modal & Phát nhạc
     setShowModal(true);
     playMusic();
 
+    // Gửi báo cáo
     const chiTietBaoCao = noCount === 0 
       ? `Đồng ý ngay lập tức không suy nghĩ! (Nút: "${getYesButtonText()}")` 
       : `Đã chịu đồng ý sau ${noCount} lần bấm Không. (Nút: "${getYesButtonText()}")`;
@@ -53,27 +78,21 @@ export default function Page3({ playMusic, sendNotification }) {
   };
 
   return (
-    <section id="page3" className="h-screen w-full flex flex-col items-center justify-center relative p-6 z-10">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-40">
-        {fallingElements.map((el) => (
-          <div key={el.id} className="absolute animate-rise" style={{ left: `${el.left}%`, animationDelay: `${el.delay}s`, fontSize: `${el.size}px`, bottom: '-50px' }}>
-            {el.char}
-          </div>
-        ))}
-      </div>
-
-      <div className={`text-center max-w-xl flex flex-col items-center bg-white/65 backdrop-blur-md p-10 rounded-[2.5rem] border border-white/60 shadow-2xl gold-border-glow mx-4 transition-all duration-500 animate-card-pop ${isShaking ? 'animate-shake' : ''}`}>
-        <div className="text-6xl mb-6 animate-float">👑</div>
+    <section id="page3" className="min-h-[100dvh] w-full flex flex-col items-center justify-center relative p-4 md:p-6 py-16 z-10">
+      
+      {/* Main card */}
+      <div className={`text-center max-w-xl flex flex-col items-center bg-white/65 backdrop-blur-md p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-white/60 shadow-2xl gold-border-glow mx-4 transition-all duration-500 animate-card-pop w-[90%] sm:w-auto ${isShaking ? 'animate-shake' : ''}`}>
+        <div className="text-5xl md:text-6xl mb-4 md:mb-6 animate-float">👑</div>
         
-        <h2 className="text-xl md:text-2xl font-bold text-amber-950 mb-12 leading-relaxed tracking-wide h-20 flex items-center justify-center transition-all duration-300">
+        <h2 className="text-lg md:text-2xl font-bold text-amber-950 mb-8 md:mb-12 leading-relaxed tracking-wide min-h-[80px] flex items-center justify-center transition-all duration-300">
           {rsvpPhrases[Math.min(noCount, rsvpPhrases.length - 1)]}
         </h2>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full px-4 min-h-[100px]">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 w-full min-h-[100px] relative">
           <button 
             onClick={handleYesClick}
-            style={{ transform: `scale(${1 + noCount * 0.15})` }}
-            className={`px-10 py-4 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 text-white font-bold rounded-full shadow-xl active:scale-95 transition-all duration-300 cursor-pointer w-full sm:w-auto text-base whitespace-nowrap z-10 animate-mobile-btn ${noCount > 0 ? 'animate-pulse-glow' : ''}`}
+            style={{ transform: `scale(${1 + noCount * 0.1})` }}
+            className={`px-8 md:px-10 py-3 md:py-4 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 text-white font-bold rounded-full shadow-xl active:scale-95 transition-all duration-300 cursor-pointer w-full sm:w-auto text-sm md:text-base whitespace-nowrap z-10 animate-mobile-btn ${noCount > 0 ? 'animate-pulse-glow' : ''}`}
           >
             {getYesButtonText()}
           </button>
@@ -81,7 +100,7 @@ export default function Page3({ playMusic, sendNotification }) {
           {noCount < 3 && (
             <button 
               onClick={handleNoClick}
-              className="px-8 py-4 bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-base rounded-full shadow-md transition-all duration-200 cursor-pointer w-full sm:w-auto whitespace-nowrap active:scale-90"
+              className="px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-sm md:text-base rounded-full shadow-md transition-all duration-200 cursor-pointer w-full sm:w-auto whitespace-nowrap active:scale-90"
             >
               {getNoButtonText()}
             </button>
@@ -89,17 +108,29 @@ export default function Page3({ playMusic, sendNotification }) {
         </div>
       </div>
 
+      {/* ✨ Success Modal Nâng Cấp */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-white/95 border-4 border-amber-100 rounded-[2.5rem] p-8 md:p-12 text-center max-w-sm w-full shadow-2xl relative">
-            <span className="text-6xl block mb-4 animate-bounce">🦋✨</span>
-            <h3 className="text-2xl font-bold text-amber-600 mb-3 tracking-wider">Yêu Em Nhiều Nhất!</h3>      
-            <p className="text-slate-500 text-sm leading-relaxed mb-6 font-medium">
-              Anh cảm ơn công chúa đã đồng ý đi sinh nhật anh nha 
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-opacity duration-500">
+          
+          {/* Hộp quà Modal phát sáng rực rỡ */}
+          <div className="bg-white/95 border-4 border-amber-300 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 text-center max-w-sm w-full shadow-[0_0_80px_rgba(251,191,36,0.5)] relative animate-card-pop overflow-hidden">
+            
+            {/* Lớp viền Gradient lấp lánh chạy bên trong */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-100/40 to-pink-100/40 pointer-events-none"></div>
+
+            <span className="text-6xl md:text-7xl block mb-6 animate-balloon">🥰🦋</span>
+            
+            <h3 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-amber-500 mb-4 tracking-wider">
+              Yêu Em Nhiều Nhất!
+            </h3>
+            
+            <p className="text-slate-600 text-sm md:text-base leading-relaxed mb-8 font-semibold relative z-10">
+              Anh cảm ơn công chúa đã đồng ý đi sinh nhật anh nha. Chuẩn bị thật lộng lẫy nha cục dàng! ✨
             </p>
+            
             <button 
               onClick={() => setShowModal(false)}
-              className="px-8 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold rounded-full shadow-md transition-all text-sm cursor-pointer animate-pulse-glow animate-mobile-btn"
+              className="px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-bold rounded-full shadow-[0_0_20px_rgba(244,114,182,0.6)] transition-all text-sm md:text-base cursor-pointer animate-pulse-glow animate-mobile-btn w-full relative z-10"
             >
               Hẹn gặp em bé vào thứ Bảy 🙈
             </button>

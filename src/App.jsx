@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import Page1 from './components/Page1';
+import MemoryPage from './components/MemoryPage';
 import Page2 from './components/Page2';
 import Page3 from './components/Page3';
 
 export default function App() {
+  const [noCount, setNoCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
@@ -80,7 +82,6 @@ export default function App() {
       duration: Math.random() * 5 + 4, size: Math.random() * 22 + 15
     }));
   });
-
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) element.scrollIntoView({ behavior: 'smooth' });
@@ -146,9 +147,24 @@ export default function App() {
       </div>
 
       {/* Gọi các component con và truyền hàm điều khiển xuống */}
-      <Page1 onNext={() => { scrollToSection('page2'); playMusic(); }} />
+{/* Gọi các component con và truyền hàm điều khiển xuống */}
+      
+      {/* Trang 1: Bấm nút xong sẽ cuộn tới trang Memory */}
+      <Page1 onNext={() => { scrollToSection('memory'); playMusic(); }} />
+      
+      {/* ✨ TRANG KỶ NIỆM ĐƯỢC CHÈN VÀO ĐÂY: Xem hết ảnh sẽ cuộn tới Page 2 */}
+      <MemoryPage onNext={() => scrollToSection('page2')} />
+      
+      {/* Trang 2: Bấm nút sẽ cuộn tới Page 3 */}
       <Page2 onNext={() => scrollToSection('page3')} />
-      <Page3 playMusic={playMusic} sendNotification={sendNotification} />
+      
+      {/* Trang 3: Chốt hạ */}
+      <Page3 
+        playMusic={playMusic} 
+        sendNotification={sendNotification} 
+        noCount={noCount} 
+        setNoCount={setNoCount} 
+      />
 
     </div>
   );
