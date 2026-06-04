@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Khởi tạo Gemini API
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ 
-  model: "gemini-1.5-flash",
+  model: "gemini-2.5-flash",
   systemInstruction: `Bạn là "Trợ lý Tình Yêu", một AI vô cùng dễ thương, lanh lợi và ngọt ngào do anh Gia Huy lập trình ra để hỗ trợ riêng cho "Công chúa" (bạn gái của anh ấy). 
   Thông tin sự kiện bạn cần biết: 
   - Buổi tiệc: Sinh nhật của anh Gia Huy.
@@ -23,7 +23,7 @@ const model = genAI.getGenerativeModel({
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'bot', text: 'Dạ em chào Công chúa! 🌸 Chị cần em hỗ trợ thông tin gì về buổi sinh nhật của anh Gia Huy ngày 06/06 không ạ?' }
+    { role: 'bot', text: 'Hello cục dàng, cục dàng có câu hỏi nào cần anh trả lời ạ?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,28 +35,38 @@ export default function Chatbot() {
   };
   useEffect(scrollToBottom, [messages]);
 
-  const handleSend = async () => {
+const handleSend = async () => {
     if (!input.trim()) return;
 
     const userText = input.trim();
+    // Cập nhật UI ngay lập tức
     setMessages(prev => [...prev, { role: 'user', text: userText }]);
     setInput('');
     setIsLoading(true);
 
     try {
-      // Gọi Gemini API
-      const chat = model.startChat({
-        history: messages.filter(m => m.text).map(m => ({
+      // ✨ LỌC SẠCH LỊCH SỬ ĐỂ KHÔNG BAO GIỜ BỊ LỖI
+      const cleanHistory = messages
+        .slice(1) // Bỏ câu chào mặc định đầu tiên
+        .filter(m => !m.text.includes('bảo trì')) // Bỏ luôn các câu báo lỗi cũ để AI không bị lú
+        .map(m => ({
           role: m.role === 'bot' ? 'model' : 'user',
           parts: [{ text: m.text }],
-        }))
+        }));
+
+      // Thêm câu hỏi hiện tại của Công chúa vào cuối danh sách
+      cleanHistory.push({ role: 'user', parts: [{ text: userText }] });
+
+      // Gọi API bằng phương thức generateContent (ổn định hơn startChat)
+      const result = await model.generateContent({
+        contents: cleanHistory
       });
 
-      const result = await chat.sendMessage(userText);
       const responseText = result.response.text();
-
       setMessages(prev => [...prev, { role: 'bot', text: responseText }]);
-} catch {
+
+    } catch (error) {
+      console.error("🔍 LỖI GEMINI CHI TIẾT:", error); 
       setMessages(prev => [...prev, { role: 'bot', text: 'Dạ hệ thống của anh Huy đang bảo trì một xíu, chị đợi em lát nha 🥺' }]);
     } finally {
       setIsLoading(false);
