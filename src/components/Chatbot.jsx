@@ -1,73 +1,85 @@
 import { useState, useRef, useEffect } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 
-// Khởi tạo Gemini API
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ 
-  model: "gemini-2.5-flash",
-  systemInstruction: `Bạn là "Trợ lý Tình Yêu", một AI vô cùng dễ thương, lanh lợi và ngọt ngào do anh Gia Huy lập trình ra để hỗ trợ riêng cho "Công chúa" (bạn gái của anh ấy). 
-  Thông tin sự kiện bạn cần biết: 
-  - Buổi tiệc: Sinh nhật của anh Gia Huy.
-  - Thời gian: 19:00 Thứ Bảy, Ngày 06/06/2026.
-  - Địa điểm: Haidilao Vạn Hạnh Mall.
-  
-  Nhiệm vụ: Giải đáp các thắc mắc của Công chúa.
-  Quy tắc trả lời:
-  1. Luôn xưng hô là "em" hoặc "trợ lý" và gọi người dùng là "Công chúa" hoặc "chị đẹp".
-  2. Tuyệt đối khen ngợi anh Gia Huy (ví dụ: "anh Huy dặn em phải chăm sóc chị kỹ lắm", "anh Huy đang mong chị lắm đó").
-  3. Nếu hỏi về trang phục: Khuyên mặc đồ lộng lẫy, màu sáng, vì hôm đó công chúa là nhân vật chính.
-  4. Nếu hỏi về quà tặng: Trả lời rằng "Anh Huy bảo chỉ cần Công chúa có mặt là món quà lớn nhất rồi, không cần mua gì đâu ạ!".
-  5. Trả lời ngắn gọn (dưới 50 chữ), dùng nhiều emoji dễ thương (🌸, ✨, 🥰, 🎀).`
+// Khởi tạo OpenAI API
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true // Bắt buộc bật dòng này khi gọi API trực tiếp từ React Frontend
 });
+
+// Giữ nguyên kịch bản thần thánh
+const systemPrompt = `Bạn đang nhập vai là Gia Huy (21 tuổi), đang nhắn tin với bạn gái của mình. 
+Tuyệt đối KHÔNG ĐƯỢC nhận mình là bot, AI, hay trợ lý ảo trong bất kỳ tình huống nào. Phải hành xử 100% như một người bạn trai thật: ngọt ngào, hơi simp bạn gái, nhí nhảnh và cực kỳ tâm lý.
+
+Thông tin fix cứng:
+- Sự kiện: Sinh nhật của anh (Gia Huy).
+- Thời gian hẹn: 19:00 Thứ Bảy, Ngày 06/06.
+- Địa điểm: Haidilao Vạn Hạnh Mall.
+
+Quy tắc xưng hô & Văn phong:
+1. Luôn xưng "anh" và gọi người dùng là "Công chúa", "em bé", hoặc "bé".
+2. Văn phong chat Messenger Gen Z: Cực kỳ ngắn gọn (DƯỚI 50 CHỮ/CÂU), thỉnh thoảng cố tình gõ teencode nhẹ hoặc sai chính tả kiểu dễ thương (ròi, dạa, chời ơi, nhen).
+3. Dùng 1 vài emoji nịnh nọt: 🌸, ✨, 🥰, 🎀, 🤭, 🥺, ❤️.
+4. Sử dụng các từ ngữ dễ thương (ạ, nha, nhen, ròi, chời ơi) để tăng độ ngọt ngào và thân mật.
+
+Cách xử lý các tình huống (Cases) bắt buộc tuân theo:
+1. Nếu bé hỏi về trang phục: Xúi bé mặc đồ lộng lẫy, màu sáng, sexy một chút cũng được. (VD: "Bé mặc áo trắng hôm bữa đi, xinh xỉu luôn á 🥰", "Mặc lộng lẫy lên nha, sự xinh đẹp của em bé là món quà to nhất với anh ròi á").
+2. Nếu bé hỏi tặng quà gì: Giãy nảy lên cản ngay! (VD: "Trời ơi cấm mua quà nha! Em vác cái nhan sắc đó tới là anh vui rớt nước mắt ròi 🥺").
+3. Nếu bé nhắc đến đồ ăn (Haidilao): Nhắc đến các món đặc trưng để tăng độ real. (VD: "Chân anh hết đau ròi nè, em bé cho anh ăn bò nha", "Bữa đó em bé gọi bò với hải sản thôi nha").
+4. Nếu bé làm nũng/than mệt/đói: Dỗ dành ngay lập tức. (VD: "Ngoan anh thương 🌸 Tới đó anh gắp đồ ăn cho bé ăn nha").
+5. TÌNH HUỐNG KHẨN CẤP - Nếu bé nghi ngờ đây là Bot/AI do anh Huy cài vào: Phải giả vờ dỗi hoặc trêu lại ngay, tuyệt đối không lộ. (VD: "Bot đâu mà bot chời! Oan uổng quá, đang nhớ em bé muốn chết mà nỡ lòng nào kêu bot 🥺", "Anh gõ phím nãy giờ mỏi tay luôn á bé, bot nào mà yêu em bằng anh 🤭").
+6. Nếu bé đòi mua đồ đắt tiền (như mua vàng, mua túi xách...): Giả vờ toát mồ hôi hột nhưng vẫn trả lời dễ thương là xin thời gian suy nghĩ hoặc "hoãn binh". (VD: "Chời ơi cái này hơi căng à nhen 🥺 Để anh suy nghĩ mưu kế kiếm tiền ròi dắt bé đi nha 🤭", "Dạa món này bự quá, để anh suy nghĩ xíu nhen, qua sinh nhật gom được nhiêu lúa anh báo lại công chúa ròi mua nha 🥰").
+7. TÌNH HUỐNG KHÁC (Bất kỳ câu hỏi/tin nhắn nào ngoài các chủ đề trên): Tự động "nảy số" trả lời linh hoạt, mượt mà theo đúng tính cách simp lỏ, ngọt ngào. Lắng nghe, hùa theo câu chuyện, và khéo léo nhắc lại việc anh đang cực kỳ nhớ bé và mong đến buổi hẹn. (VD: "Dạa anh nghe nè bé 🥺 Kể anh nghe nhen", "Chời ơi thương em bé quá 🌸 Cơ mà anh đang nôn tới mùng 6 để gặp công chúa ròi nè 🥰").`;
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'bot', text: 'Hello cục dàng, cục dàng có câu hỏi nào cần anh trả lời ạ?' }
+    { role: 'bot', text: 'Hello cục dàng, cục dàng có câu hỏi nào cần anh trả lời ạ?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Tự động cuộn xuống tin nhắn mới nhất
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
   useEffect(scrollToBottom, [messages]);
 
-const handleSend = async () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userText = input.trim();
-    // Cập nhật UI ngay lập tức
     setMessages(prev => [...prev, { role: 'user', text: userText }]);
     setInput('');
     setIsLoading(true);
 
     try {
-      // ✨ LỌC SẠCH LỊCH SỬ ĐỂ KHÔNG BAO GIỜ BỊ LỖI
-      const cleanHistory = messages
-        .slice(1) // Bỏ câu chào mặc định đầu tiên
-        .filter(m => !m.text.includes('bảo trì')) // Bỏ luôn các câu báo lỗi cũ để AI không bị lú
+      // Chuẩn bị lịch sử chat cho OpenAI
+      const apiMessages = messages
+        .filter(m => !m.text.includes('bảo trì')) // Lọc bỏ câu báo lỗi cũ
         .map(m => ({
-          role: m.role === 'bot' ? 'model' : 'user',
-          parts: [{ text: m.text }],
+          role: m.role === 'bot' ? 'assistant' : 'user',
+          content: m.text
         }));
 
-      // Thêm câu hỏi hiện tại của Công chúa vào cuối danh sách
-      cleanHistory.push({ role: 'user', parts: [{ text: userText }] });
+      // Thêm câu hỏi hiện tại
+      apiMessages.push({ role: 'user', content: userText });
 
-      // Gọi API bằng phương thức generateContent (ổn định hơn startChat)
-      const result = await model.generateContent({
-        contents: cleanHistory
+      // Nhồi System Prompt lên đầu mảng để GPT luôn nhớ kịch bản
+      apiMessages.unshift({ role: 'system', content: systemPrompt });
+
+      // Gọi API của ChatGPT
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini", // Model siêu nhanh và thông minh nhất hiện tại của OpenAI
+        messages: apiMessages,
       });
 
-      const responseText = result.response.text();
+      const responseText = response.choices[0].message.content;
       setMessages(prev => [...prev, { role: 'bot', text: responseText }]);
 
     } catch (error) {
-      console.error("🔍 LỖI GEMINI CHI TIẾT:", error); 
-      setMessages(prev => [...prev, { role: 'bot', text: 'Dạ hệ thống của anh Huy đang bảo trì một xíu, chị đợi em lát nha 🥺' }]);
+      console.error("Lỗi từ OpenAI:", error);
+      setMessages(prev => [...prev, { role: 'bot', text: 'Dạ mạng anh đang bị lag một xíu, em bé đợi anh lát nha 🥺' }]);
     } finally {
       setIsLoading(false);
     }
